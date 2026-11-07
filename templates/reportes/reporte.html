@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>{{ titulo }}</h1>{% if filtros_texto %}<small class="text-muted">{{ filtros_texto }}</small>{% endif %}</div>
+  {% include "reportes/_exportar.html" %}
+</div>
+{% include "reportes/_filtros.html" %}
+{% if resumen %}
+<div class="row g-2 mb-3">
+  {% for etiqueta, valor in resumen %}
+  <div class="col-6 col-md"><div class="card kpi kpi-primary"><div class="card-body py-2"><div class="numero fs-4">{{ valor }}</div><div class="small text-muted">{{ etiqueta }}</div></div></div></div>
+  {% endfor %}
+</div>
+{% endif %}
+<div class="card"><div class="table-responsive">
+<table class="table table-sm table-hover mb-0 align-top small">
+  <thead><tr>{% for c in columnas %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for fila in pagina %}
+    <tr>{% for v in fila %}<td class="texto-largo">{{ v|default:"—"|truncatechars:160 }}</td>{% endfor %}</tr>
+  {% empty %}
+    <tr><td colspan="{{ columnas|length }}" class="text-center text-muted py-4">No hay registros para los filtros seleccionados.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% include "includes/paginacion.html" with filtros=params %}
+{% endblock %}

@@ -1,0 +1,124 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Soporte TIC{% endblock %} · {{ INSTITUCION_SIGLAS }}</title>
+  <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/estilos.css' %}" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+</head>
+<body>
+{% if user.is_authenticated %}
+<nav class="navbar topbar sticky-top">
+  <div class="container-fluid">
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-link text-success d-lg-none p-1" data-bs-toggle="offcanvas" data-bs-target="#menu"><i class="bi bi-list fs-3"></i></button>
+      <a class="navbar-brand d-flex align-items-center gap-3 py-1" href="{% url 'inicio' %}">
+        <img src="{% static 'img/logo_istam.png' %}" alt="{{ INSTITUCION_SIGLAS }}" class="logo d-none d-sm-block">
+        <img src="{% static 'img/logo_icono.png' %}" alt="{{ INSTITUCION_SIGLAS }}" class="logo d-sm-none">
+        <span class="titulo-sistema d-none d-md-block">Soporte de Equipos<small>Informáticos · Departamento de TIC</small></span>
+      </a>
+    </div>
+    <div class="d-flex align-items-center gap-2 small">
+      <span class="usuario d-none d-lg-inline"><i class="bi bi-person-circle"></i> {{ user.first_name|title|default:user.username }}
+        <span class="badge badge-rol ms-1">{{ user.get_rol_display_efectivo }}</span></span>
+      <a class="btn btn-sm btn-outline-light" href="{% url 'perfil' %}" title="Mi perfil"><i class="bi bi-person"></i></a>
+      <a class="btn btn-sm btn-outline-light" href="{% url 'cambiar_clave' %}" title="Cambiar contraseña"><i class="bi bi-key"></i></a>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+        <button class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right"></i> Salir</button>
+      </form>
+    </div>
+  </div>
+</nav>
+<div class="d-flex">
+  <aside class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" id="menu">
+    <div class="offcanvas-header d-lg-none">
+      <img src="{% static 'img/logo_istam.png' %}" alt="{{ INSTITUCION_SIGLAS }}" style="height:36px">
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#menu"></button>
+    </div>
+    {% with url=request.resolver_match.url_name %}
+    <div class="offcanvas-body flex-column p-3">
+      <a class="nav-link mb-2 {% if url == 'inicio' %}active{% endif %}" href="{% url 'inicio' %}"><i class="bi bi-speedometer2"></i> Inicio</a>
+
+      <div class="menu-titulo">Soporte técnico</div>
+      <a class="nav-link {% if url|slice:':6' == 'ticket' and url != 'ticket_crear' %}active{% endif %}" href="{% url 'ticket_lista' %}">
+        <i class="bi bi-ticket-detailed"></i>
+        {% if user.es_practicante %}Tickets asignados{% elif user.es_personal_tic %}Tickets{% else %}Mis tickets{% endif %}
+      </a>
+      {% if user.puede_crear_tickets %}
+      <a class="nav-link {% if url == 'ticket_crear' %}active{% endif %}" href="{% url 'ticket_crear' %}"><i class="bi bi-plus-circle"></i> Crear ticket</a>
+      {% endif %}
+
+      <div class="menu-titulo">Equipos</div>
+      <a class="nav-link {% if url|slice:':6' == 'equipo' %}active{% endif %}" href="{% url 'equipo_lista' %}">
+        <i class="bi bi-laptop"></i> {% if user.es_solicitante %}Mis equipos{% else %}Inventario{% endif %}
+      </a>
+      {% if user.es_admin %}
+      <a class="nav-link {% if url|slice:':8' == 'catalogo' %}active{% endif %}" href="{% url 'catalogos' %}"><i class="bi bi-tags"></i> Categorías, marcas y modelos</a>
+      {% endif %}
+
+      {% if user.es_personal_tic or user.es_practicante %}
+      <div class="menu-titulo">Aplicaciones</div>
+      <a class="nav-link {% if url|slice:':10' == 'aplicacion' %}active{% endif %}" href="{% url 'aplicacion_lista' %}"><i class="bi bi-window-stack"></i> Catálogo de aplicaciones</a>
+      {% endif %}
+
+      {% if user.puede_ver_reportes %}
+      <div class="menu-titulo">Reportes</div>
+      <a class="nav-link {% if url|slice:':7' == 'reporte' %}active{% endif %}" href="{% url 'reportes' %}"><i class="bi bi-file-earmark-bar-graph"></i> Reportes</a>
+      {% endif %}
+
+      {% if user.es_admin %}
+      <div class="menu-titulo">Administración</div>
+      <a class="nav-link {% if url|slice:':7' == 'usuario' %}active{% endif %}" href="{% url 'usuario_lista' %}"><i class="bi bi-people"></i> Usuarios</a>
+      <a class="nav-link" href="{% url 'admin:index' %}" target="_blank"><i class="bi bi-gear"></i> Panel avanzado</a>
+      {% endif %}
+
+      <div class="menu-titulo">Mi cuenta</div>
+      <a class="nav-link {% if url == 'perfil' %}active{% endif %}" href="{% url 'perfil' %}"><i class="bi bi-person"></i> Mi perfil</a>
+      <a class="nav-link {% if url == 'cambiar_clave' %}active{% endif %}" href="{% url 'cambiar_clave' %}"><i class="bi bi-key"></i> Cambiar contraseña</a>
+    </div>
+    {% endwith %}
+  </aside>
+  <main class="flex-grow-1 p-3 p-md-4">
+    {% for m in messages %}
+    <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show aviso-sistema" role="alert">
+      <i class="bi {% if m.tags == 'success' %}bi-check-circle-fill{% elif m.tags == 'error' %}bi-x-circle-fill{% elif m.tags == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+      <span>{{ m }}</span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {% endfor %}
+    {% block contenido %}{% endblock %}
+  </main>
+</div>
+{% else %}
+  {% block publico %}{% endblock %}
+{% endif %}
+{% if user.is_authenticated %}
+<!-- Ventana de confirmación propia del sistema (ver static/js/app.js) -->
+<div class="modal fade" id="modal-confirmar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content confirmar">
+      <div class="confirmar-cabecera">
+        <img src="{% static 'img/logo_istam.png' %}" alt="{{ INSTITUCION_SIGLAS }}">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center px-4 pt-3 pb-2">
+        <div class="confirmar-icono info"><i class="bi bi-question-circle"></i></div>
+        <h2 class="confirmar-titulo h5 mt-3 mb-2">Confirmar acción</h2>
+        <p class="confirmar-mensaje text-muted mb-0"></p>
+      </div>
+      <div class="modal-footer justify-content-center border-0 pb-4 gap-2">
+        <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-istam confirmar-aceptar px-4">Aceptar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

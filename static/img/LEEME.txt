@@ -1,0 +1,2 @@
+Copie aquí el logo del instituto con el nombre logo_istam.png
+y aparecerá automáticamente en el encabezado de todos los PDF.

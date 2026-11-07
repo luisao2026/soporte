@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <h1>{{ titulo }}</h1>
+  {% if user.puede_crear_tickets %}<a href="{% url 'ticket_crear' %}" class="btn btn-istam"><i class="bi bi-plus-circle"></i> Crear ticket</a>{% endif %}
+</div>
+<form class="card card-body mb-3" method="get">
+  <div class="row g-2">
+    <div class="col-md">{{ form.q }}</div>
+    <div class="col-md-2">{{ form.ambito }}</div>
+    <div class="col-md-2">{{ form.estado }}</div>
+    <div class="col-md-2">{{ form.tipo }}</div>
+    <div class="col-md-2">{{ form.prioridad }}</div>
+    {% if form.practicante %}<div class="col-md-2">{{ form.practicante }}</div>{% endif %}
+    <div class="col-md-auto d-grid"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i></button></div>
+  </div>
+</form>
+<div class="card"><div class="table-responsive">
+<table class="table table-hover mb-0 align-middle">
+  <thead><tr><th>Ticket</th><th>Equipo / aplicación</th><th>Solicitante</th><th>Tipo de soporte</th><th>Prioridad</th><th>Técnico</th><th>Estado</th></tr></thead>
+  <tbody>
+  {% for t in pagina %}
+    <tr>
+      <td><a href="{% url 'ticket_detalle' t.pk %}" class="fw-semibold">{{ t.numero }}</a><br><small class="text-muted">{{ t.fecha|date:"d/m/Y H:i" }}</small></td>
+      <td>{% include "includes/atendido.html" %}</td>
+      <td>{{ t.solicitante }}</td>
+      <td>{{ t.get_tipo_soporte_display }}</td>
+      <td>{% include "includes/prioridad.html" %}</td>
+      <td>{% if t.practicante %}{{ t.practicante }}{% else %}<span class="text-muted">Sin asignar</span>{% endif %}</td>
+      <td>{% include "includes/estado_ticket.html" %}{% if t.resultado %}<br><small>{{ t.get_resultado_display }}</small>{% endif %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="text-center text-muted py-4">No hay tickets{% if request.GET %} con esos filtros{% endif %}.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% include "includes/paginacion.html" %}
+{% endblock %}

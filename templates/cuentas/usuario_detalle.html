@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block titulo %}{{ u }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>{{ u.nombre_completo }}</h1><small class="text-muted">{{ u.get_rol_display_efectivo }} ·
+    {% if u.is_active %}<span class="text-success">Activo</span>{% else %}<span class="text-danger">Inactivo</span>{% endif %}</small></div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'usuario_editar' u.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Modificar</a>
+    <form method="post" action="{% url 'usuario_restablecer_clave' u.pk %}">{% csrf_token %}
+      <button class="btn btn-outline-warning" data-titulo="Restablecer contraseña" data-tipo="aviso" data-boton="Sí, restablecer" data-confirmar="La contraseña de {{ u.nombre_completo }} pasará a ser su número de cédula. ¿Desea continuar?"><i class="bi bi-key"></i> Restablecer contraseña</button></form>
+    {% if u.es_solicitante %}<a href="{% url 'equipo_crear' %}?responsable={{ u.pk }}" class="btn btn-outline-secondary"><i class="bi bi-laptop"></i> Asignar equipo</a>{% endif %}
+    <a href="{% url 'usuario_lista' %}" class="btn btn-light">Volver</a>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-4"><div class="card"><div class="card-body"><dl class="dato mb-0">
+    <dt>Cédula</dt><dd>{{ u.cedula|default:"—" }}</dd>
+    <dt>Usuario</dt><dd>{{ u.username }}</dd>
+    <dt>Correo</dt><dd>{{ u.email|default:"—" }}</dd>
+    <dt>Celular</dt><dd>{{ u.celular|default:"—" }}</dd>
+    <dt>Dirección</dt><dd>{{ u.direccion|default:"—" }}</dd>
+    <dt>Cargo</dt><dd>{{ u.cargo|default:"—" }}</dd>
+    <dt>Género</dt><dd>{{ u.get_genero_display|default:"—" }}</dd>
+    <dt>Último ingreso</dt><dd class="mb-0">{{ u.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</dd>
+  </dl></div></div></div>
+  <div class="col-lg-8">
+    <div class="card mb-3"><div class="card-header">Equipos a su cargo ({{ equipos|length }})</div>
+      <ul class="list-group list-group-flush">
+      {% for e in equipos %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'equipo_detalle' e.pk %}">{{ e }}</a>{% include "includes/estado_equipo.html" %}</li>
+      {% empty %}<li class="list-group-item text-muted">Sin equipos.</li>{% endfor %}
+      </ul></div>
+    {% if u.es_practicante %}
+    <div class="card"><div class="card-header">Últimos tickets asignados</div>
+      <ul class="list-group list-group-flush">
+      {% for t in asignados %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'ticket_detalle' t.pk %}">{{ t.numero }} · {% include "includes/atendido.html" with corto=1 %}</a>{% include "includes/estado_ticket.html" %}</li>
+      {% empty %}<li class="list-group-item text-muted">Sin tickets asignados.</li>{% endfor %}
+      </ul></div>
+    {% else %}
+    <div class="card"><div class="card-header">Últimos tickets solicitados</div>
+      <ul class="list-group list-group-flush">
+      {% for t in tickets %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'ticket_detalle' t.pk %}">{{ t.numero }} · {% include "includes/atendido.html" with corto=1 %}</a>{% include "includes/estado_ticket.html" %}</li>
+      {% empty %}<li class="list-group-item text-muted">Sin tickets.</li>{% endfor %}
+      </ul></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

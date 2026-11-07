@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block titulo %}Categorías, marcas y modelos{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>Categorías, marcas y modelos</h1></div>
+<div class="row g-3">
+
+  <div class="col-xl-4" id="categoria">
+    <div class="card h-100"><div class="card-header"><i class="bi bi-grid"></i> Categorías (tipo de equipo)</div>
+      <div class="card-body border-bottom">
+        <form method="post" class="row g-2" novalidate>{% csrf_token %}<input type="hidden" name="tipo" value="categoria">
+          <div class="col">{{ forms.categoria.nombre }}{% for e in forms.categoria.nombre.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+          <input type="hidden" name="categoria-activo" value="on">
+          <div class="col-auto"><button class="btn btn-istam"><i class="bi bi-plus"></i></button></div></form>
+      </div>
+      <ul class="list-group list-group-flush">
+      {% for c in categorias %}
+        <li class="list-group-item d-flex align-items-center gap-2 {% if not c.activo %}text-muted{% endif %}">
+          <span class="me-auto">{{ c.nombre }}{% if not c.activo %} <small>(inactiva)</small>{% endif %}</span>
+          <span class="badge text-bg-light border" title="Equipos">{{ c.total }}</span>
+          <a href="{% url 'catalogo_editar' 'categoria' c.pk %}" class="btn btn-sm btn-link p-0"><i class="bi bi-pencil"></i></a>
+          <form method="post" action="{% url 'catalogo_estado' 'categoria' c.pk %}">{% csrf_token %}<button class="btn btn-sm btn-link p-0" title="Activar/desactivar"><i class="bi {% if c.activo %}bi-toggle-on text-success{% else %}bi-toggle-off{% endif %}"></i></button></form>
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-xl-3" id="marca">
+    <div class="card h-100"><div class="card-header"><i class="bi bi-award"></i> Marcas</div>
+      <div class="card-body border-bottom">
+        <form method="post" class="row g-2" novalidate>{% csrf_token %}<input type="hidden" name="tipo" value="marca">
+          <div class="col">{{ forms.marca.nombre }}{% for e in forms.marca.nombre.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+          <input type="hidden" name="marca-activo" value="on">
+          <div class="col-auto"><button class="btn btn-istam"><i class="bi bi-plus"></i></button></div></form>
+      </div>
+      <ul class="list-group list-group-flush">
+      {% for m in marcas %}
+        <li class="list-group-item d-flex align-items-center gap-2 {% if not m.activo %}text-muted{% endif %}">
+          <span class="me-auto">{{ m.nombre }}{% if not m.activo %} <small>(inactiva)</small>{% endif %}<br><small class="text-muted">{{ m.n_modelos }} modelo{{ m.n_modelos|pluralize }}</small></span>
+          <span class="badge text-bg-light border" title="Equipos">{{ m.total }}</span>
+          <a href="{% url 'catalogo_editar' 'marca' m.pk %}" class="btn btn-sm btn-link p-0"><i class="bi bi-pencil"></i></a>
+          <form method="post" action="{% url 'catalogo_estado' 'marca' m.pk %}">{% csrf_token %}<button class="btn btn-sm btn-link p-0"><i class="bi {% if m.activo %}bi-toggle-on text-success{% else %}bi-toggle-off{% endif %}"></i></button></form>
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-xl-5" id="modelo">
+    <div class="card h-100"><div class="card-header"><i class="bi bi-cpu"></i> Modelos</div>
+      <div class="card-body border-bottom">
+        <form method="post" class="row g-2" novalidate>{% csrf_token %}<input type="hidden" name="tipo" value="modelo">
+          <div class="col-5">{{ forms.modelo.marca }}</div>
+          <div class="col">{{ forms.modelo.nombre }}</div>
+          <input type="hidden" name="modelo-activo" value="on">
+          <div class="col-auto"><button class="btn btn-istam"><i class="bi bi-plus"></i></button></div>
+          {% if forms.modelo.errors %}<div class="col-12 small text-danger">{% for c, errs in forms.modelo.errors.items %}{{ errs|join:" " }} {% endfor %}</div>{% endif %}
+        </form>
+      </div>
+      <div class="table-responsive" style="max-height:520px"><table class="table table-sm mb-0 align-middle">
+        <thead><tr><th>Marca</th><th>Modelo</th><th class="text-center">Equipos</th><th></th></tr></thead>
+        <tbody>
+        {% for m in modelos %}
+          <tr class="{% if not m.activo %}text-muted{% endif %}"><td>{{ m.marca }}</td><td>{{ m.nombre }}{% if not m.activo %} <small>(inactivo)</small>{% endif %}</td><td class="text-center">{{ m.total }}</td>
+            <td class="text-end text-nowrap"><a href="{% url 'catalogo_editar' 'modelo' m.pk %}" class="btn btn-sm btn-link p-0"><i class="bi bi-pencil"></i></a>
+              <form method="post" action="{% url 'catalogo_estado' 'modelo' m.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-link p-0"><i class="bi {% if m.activo %}bi-toggle-on text-success{% else %}bi-toggle-off{% endif %}"></i></button></form></td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

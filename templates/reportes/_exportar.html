@@ -1,0 +1,5 @@
+<div class="d-flex gap-2">
+  <a href="?{% if params %}{{ params }}&{% endif %}formato=pdf" target="_blank" class="btn btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+  <a href="?{% if params %}{{ params }}&{% endif %}formato=excel" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+  <a href="{% url 'reportes' %}" class="btn btn-light">Volver</a>
+</div>

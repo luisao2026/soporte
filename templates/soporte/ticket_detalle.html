@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block titulo %}Ticket {{ t.numero }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div>
+    <h1>Ticket {{ t.numero }}</h1>
+    {% include "includes/estado_ticket.html" %} {% include "includes/prioridad.html" %}
+    <span class="text-muted small ms-1">{% if t.es_aplicacion %}<i class="bi {{ t.aplicacion.icono }}"></i> {{ t.aplicacion }}{% else %}{{ t.get_tipo_soporte_display }}{% endif %} · {{ t.fecha|date:"d/m/Y H:i" }}</span>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'ticket_pdf' t.pk %}" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i> Informe PDF</a>
+    {% if p.editar %}<a href="{% url 'ticket_editar' t.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Modificar</a>{% endif %}
+    <a href="{% url 'ticket_lista' %}" class="btn btn-light">Volver</a>
+  </div>
+</div>
+
+<div class="proceso mb-3">
+  {% for nombre, hecho, actual in pasos %}
+  <div class="paso {% if hecho %}hecho{% elif actual %}actual{% endif %}">{% if hecho %}<i class="bi bi-check-lg"></i> {% endif %}{{ nombre }}</div>
+  {% endfor %}
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    {# ---------- Datos del ticket y del equipo ---------- #}
+    <div class="card mb-3"><div class="card-body">
+      <div class="row">
+        <div class="col-md-6"><dl class="dato mb-0">
+          <dt>Usuario solicitante</dt><dd>{{ t.solicitante }}<br><small class="text-muted">{{ t.solicitante.get_rol_display }}{% if t.solicitante.celular %} · {{ t.solicitante.celular }}{% endif %} · {{ t.solicitante.email }}</small></dd>
+          <dt>{% if t.es_aplicacion %}Detalle de la solicitud{% else %}Problema reportado{% endif %}</dt><dd class="texto-largo">{{ t.problema }}</dd>
+          <dt>Tipo de soporte</dt><dd>{{ t.get_tipo_soporte_display }}</dd>
+        </dl></div>
+        {% if t.es_aplicacion %}
+        <div class="col-md-6"><dl class="dato mb-0">
+          <dt>Aplicación</dt><dd>{% if user.es_personal_tic or user.es_practicante %}<a href="{% url 'aplicacion_detalle' t.aplicacion.pk %}">{{ t.aplicacion }}</a>{% else %}{{ t.aplicacion }}{% endif %}
+            <br><small class="text-muted">{{ t.aplicacion.get_tipo_display }}{% if t.aplicacion.plataforma %} · {{ t.aplicacion.plataforma }}{% endif %}</small></dd>
+          <dt>Tipo de solicitud</dt><dd>{{ t.get_categoria_app_display }}</dd>
+          <dt>Usuario, curso o página afectada</dt><dd class="texto-largo">{{ t.referencia|default:"—" }}</dd>
+          {% if t.aplicacion.url %}<dt>Dirección</dt><dd><a href="{{ t.aplicacion.url }}" target="_blank" rel="noopener">{{ t.aplicacion.url }}</a></dd>{% endif %}
+        </dl></div>
+        {% else %}
+        <div class="col-md-6"><dl class="dato mb-0">
+          <dt>Equipo</dt><dd>{% if user.es_solicitante and t.equipo.responsable_id != user.pk %}{{ t.equipo }}{% else %}<a href="{% url 'equipo_detalle' t.equipo.pk %}">{{ t.equipo }}</a>{% endif %}
+            <br><small class="text-muted">{{ t.equipo.categoria }} · estado: {{ t.equipo.get_estado_display|lower }}</small></dd>
+          <dt>Marca / modelo</dt><dd>{{ t.marca }} {{ t.modelo }}</dd>
+          <dt>Número de serie</dt><dd><code>{{ t.numero_serie }}</code></dd>
+          {% if t.equipo.especificaciones %}<dt>Especificaciones</dt><dd class="small texto-largo">{{ t.equipo.especificaciones }}</dd>{% endif %}
+        </dl></div>
+        {% endif %}
+      </div>
+    </div></div>
+
+    {# ---------- Diagnóstico ---------- #}
+    <div class="card mb-3" id="diagnostico">
+      <div class="card-header"><i class="bi bi-search"></i> {% if t.es_aplicacion %}Análisis del problema{% else %}Diagnóstico del equipo{% endif %}</div>
+      <div class="card-body">
+        {% if diag %}
+          <dl class="dato row mb-0">
+            <div class="col-md-6"><dt>{% if t.es_aplicacion %}Análisis{% else %}Diagnóstico{% endif %}</dt><dd class="texto-largo">{{ diag.descripcion }}</dd></div>
+            <div class="col-md-6"><dt>{% if t.es_aplicacion %}Causa identificada{% else %}Causa probable{% endif %}</dt><dd class="texto-largo">{{ diag.causa|default:"—" }}</dd></div>
+            {% if not t.es_aplicacion %}<div class="col-md-6"><dt>Requiere</dt><dd><span class="badge text-bg-light border">{{ diag.get_tipo_mantenimiento_display }}</span></dd></div>{% endif %}
+            <div class="col-md-6"><dt>Recomendaciones</dt><dd class="texto-largo">{{ diag.recomendacion|default:"—" }}</dd></div>
+            <div class="col-12"><small class="text-muted">Realizado por {{ diag.realizado_por }} el {{ diag.fecha|date:"d/m/Y H:i" }}</small></div>
+          </dl>
+        {% elif not form_diag %}
+          <p class="text-muted mb-0">Aún no se registra el {% if t.es_aplicacion %}análisis{% else %}diagnóstico{% endif %}.</p>
+        {% endif %}
+        {% if form_diag %}
+          {% if diag %}<button class="btn btn-sm btn-outline-secondary mt-3" data-bs-toggle="collapse" data-bs-target="#form-diag"><i class="bi bi-pencil"></i> Actualizar {% if t.es_aplicacion %}análisis{% else %}diagnóstico{% endif %}</button>{% endif %}
+          <form method="post" action="{% url 'ticket_diagnostico' t.pk %}" class="{% if diag %}collapse mt-3{% endif %}" id="form-diag" novalidate>{% csrf_token %}
+            {% include "includes/form.html" with form=form_diag %}
+            <button class="btn btn-istam mt-3"><i class="bi bi-save"></i> Guardar {% if t.es_aplicacion %}análisis{% else %}diagnóstico{% endif %}</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ---------- Mantenimientos ---------- #}
+    <div class="card mb-3" id="mantenimiento">
+      <div class="card-header"><i class="bi bi-tools"></i> {% if t.es_aplicacion %}Acciones realizadas en la aplicación{% else %}Mantenimiento (preventivo / correctivo) y reparación{% endif %}</div>
+      {% if mantenimientos %}
+      <div class="table-responsive"><table class="table mb-0 align-middle">
+        <thead><tr><th>Fecha</th>{% if not t.es_aplicacion %}<th>Tipo</th>{% endif %}<th>{% if t.es_aplicacion %}Acciones{% else %}Actividades realizadas{% endif %}</th><th>{% if t.es_aplicacion %}Herramientas / referencias{% else %}Repuestos{% endif %}</th><th>Por</th></tr></thead>
+        <tbody>{% for m in mantenimientos %}
+          <tr><td class="text-nowrap">{{ m.fecha|date:"d/m/Y H:i" }}</td>
+            {% if not t.es_aplicacion %}<td><span class="badge {% if m.tipo == 'PREVENTIVO' %}text-bg-success{% else %}text-bg-warning{% endif %}">{{ m.get_tipo_display }}</span></td>{% endif %}
+            <td class="texto-largo">{{ m.actividades }}</td><td class="texto-largo">{{ m.repuestos|default:"—" }}</td><td>{{ m.realizado_por }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% endif %}
+      <div class="card-body {% if mantenimientos %}border-top{% endif %}">
+        {% if form_mant and diag %}
+          <form method="post" action="{% url 'ticket_mantenimiento' t.pk %}" novalidate>{% csrf_token %}
+            {% include "includes/form.html" with form=form_mant %}
+            <button class="btn btn-istam mt-3"><i class="bi bi-plus-circle"></i> {% if t.es_aplicacion %}Registrar acción{% else %}Registrar mantenimiento{% endif %}</button>
+          </form>
+        {% elif form_mant %}
+          <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> {% if t.es_aplicacion %}Registre primero el análisis del problema para poder registrar las acciones.{% else %}Registre primero el diagnóstico para poder registrar el mantenimiento.{% endif %}</p>
+        {% elif not mantenimientos %}
+          <p class="text-muted mb-0">{% if t.es_aplicacion %}Sin acciones registradas.{% else %}Sin mantenimientos registrados.{% endif %}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ---------- Resultado ---------- #}
+    <div class="card mb-3" id="resultado">
+      <div class="card-header"><i class="bi bi-clipboard-check"></i> Resultado del soporte</div>
+      <div class="card-body">
+        {% if t.resultado %}
+          <h2 class="h5 mb-1">{{ t.get_resultado_display }}</h2>
+          <p class="texto-largo mb-1">{{ t.detalle_resultado }}</p>
+          <small class="text-muted">Atendido el {{ t.fecha_atencion|date:"d/m/Y H:i" }}</small>
+        {% elif form_res and diag %}
+          <form method="post" action="{% url 'ticket_resultado' t.pk %}" novalidate>{% csrf_token %}
+            {% include "includes/form.html" with form=form_res %}
+            <button class="btn btn-success mt-3" data-titulo="Registrar resultado" data-tipo="exito" data-boton="Sí, registrar" data-confirmar="El ticket {{ t.numero }} quedará como atendido y se notificará por correo al solicitante. ¿Desea continuar?"><i class="bi bi-check2-circle"></i> Registrar resultado</button>
+          </form>
+        {% else %}
+          <p class="text-muted mb-0">El soporte aún está en proceso.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ---------- Observaciones ---------- #}
+    <div class="card" id="observaciones">
+      <div class="card-header"><i class="bi bi-chat-left-text"></i> Observaciones</div>
+      <ul class="list-group list-group-flush">
+        {% for o in observaciones %}
+        <li class="list-group-item"><div class="texto-largo">{{ o.texto }}</div><small class="text-muted">{{ o.autor }} · {{ o.fecha|date:"d/m/Y H:i" }}</small></li>
+        {% empty %}
+        <li class="list-group-item text-muted">Sin observaciones.</li>
+        {% endfor %}
+      </ul>
+      {% if form_obs %}
+      <div class="card-body border-top">
+        <form method="post" action="{% url 'ticket_observacion' t.pk %}" novalidate>{% csrf_token %}
+          {% include "includes/form.html" with form=form_obs %}
+          <button class="btn btn-outline-primary btn-sm mt-2"><i class="bi bi-plus"></i> Agregar observación</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    {# ---------- Asignación ---------- #}
+    <div class="card mb-3" id="asignar">
+      <div class="card-header"><i class="bi bi-person-gear"></i> Técnico/practicante asignado</div>
+      <div class="card-body">
+        {% if t.practicante %}
+          <div class="fw-semibold">{{ t.practicante }}</div>
+          <small class="text-muted">Asignado el {{ t.fecha_asignacion|date:"d/m/Y H:i" }}{% if t.asignado_por %} por {{ t.asignado_por }}{% endif %}</small>
+        {% else %}
+          <p class="text-muted mb-0">Pendiente de asignación.</p>
+        {% endif %}
+        {% if form_asignar %}
+          <form method="post" action="{% url 'ticket_asignar' t.pk %}" class="mt-3" novalidate>{% csrf_token %}
+            {% include "includes/form.html" with form=form_asignar cols="col-12" %}
+            <button class="btn btn-istam w-100 mt-3"><i class="bi bi-send"></i> {% if t.practicante %}Reasignar / actualizar{% else %}Asignar ticket{% endif %}</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if form_cerrar %}
+    <div class="card mb-3 border-success">
+      <div class="card-header text-success"><i class="bi bi-lock"></i> Cierre del ticket</div>
+      <div class="card-body">
+        <form method="post" action="{% url 'ticket_cerrar' t.pk %}" novalidate>{% csrf_token %}
+          {% include "includes/form.html" with form=form_cerrar cols="col-12" %}
+          <button class="btn btn-success w-100 mt-3" data-titulo="Cerrar ticket" data-tipo="info" data-boton="Sí, cerrar" data-confirmar="Una vez cerrado, el ticket {{ t.numero }} ya no podrá modificarse. ¿Desea cerrarlo?"><i class="bi bi-lock"></i> Cerrar ticket</button>
+        </form>
+      </div>
+    </div>
+    {% elif t.estado == "CERRADO" %}
+    <div class="alert alert-success"><i class="bi bi-lock"></i> Ticket cerrado el {{ t.fecha_cierre|date:"d/m/Y H:i" }}{% if t.cerrado_por %} por {{ t.cerrado_por }}{% endif %}.</div>
+    {% endif %}
+
+    {% if form_estado %}
+    <div class="card mb-3">
+      <div class="card-header"><a class="text-reset text-decoration-none d-flex justify-content-between" data-bs-toggle="collapse" href="#form-estado">
+        <span><i class="bi bi-arrow-repeat"></i> Cambiar estado del ticket</span><i class="bi bi-chevron-down"></i></a></div>
+      <div class="collapse" id="form-estado"><div class="card-body">
+        <p class="small text-muted">Úselo para corregir o reabrir un ticket. Queda registrado en el historial.</p>
+        <form method="post" action="{% url 'ticket_cambiar_estado' t.pk %}" novalidate>{% csrf_token %}
+          {% include "includes/form.html" with form=form_estado cols="col-12" %}
+          <button class="btn btn-outline-danger w-100 mt-3" data-titulo="Cambiar estado del ticket" data-tipo="aviso" data-boton="Sí, cambiar" data-confirmar="El cambio quedará registrado en el historial del ticket {{ t.numero }}. ¿Desea continuar?">Cambiar estado</button>
+        </form>
+      </div></div>
+    </div>
+    {% endif %}
+
+    {# ---------- Historial ---------- #}
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clock-history"></i> Historial</div>
+      <div class="card-body">
+        <ul class="linea-tiempo">
+          {% for h in historial %}
+          <li><div class="small">{{ h.accion }}</div><small class="text-muted">{{ h.fecha|date:"d/m/Y H:i" }}{% if h.usuario %} · {{ h.usuario }}{% endif %}</small></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

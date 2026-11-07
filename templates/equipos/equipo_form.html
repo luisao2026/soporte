@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>{{ titulo }}</h1><a href="{% if equipo %}{% url 'equipo_detalle' equipo.pk %}{% else %}{% url 'equipo_lista' %}{% endif %}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Volver</a></div>
+<div class="card"><div class="card-body">
+  <form method="post" novalidate>{% csrf_token %}
+    {% include "includes/form.html" with form=form cols="col-md-4" %}
+    {% if not user.es_admin %}<div class="alert alert-info mt-3 mb-0 py-2 small"><i class="bi bi-info-circle"></i> El equipo quedará registrado a su nombre. El código se genera automáticamente.</div>{% endif %}
+    <div class="mt-4 d-flex gap-2"><button class="btn btn-istam"><i class="bi bi-save"></i> Guardar</button>
+      <a href="{% url 'equipo_lista' %}" class="btn btn-light">Cancelar</a></div>
+  </form>
+</div></div>
+{{ modelos_json|json_script:"modelos-data" }}
+{% endblock %}
+{% block scripts %}
+<script>
+// Filtra los modelos según la marca elegida
+(function () {
+  const modelos = JSON.parse(document.getElementById("modelos-data").textContent);
+  const marca = document.getElementById("id_marca"), modelo = document.getElementById("id_modelo");
+  if (!marca || !modelo) return;
+  const actual = modelo.value;
+  function llenar() {
+    const sel = modelo.value || actual;
+    modelo.innerHTML = '<option value="">Seleccione el modelo</option>';
+    modelos.filter(m => String(m.marca_id) === marca.value).forEach(m => {
+      const o = new Option(m.nombre, m.id, false, String(m.id) === sel);
+      modelo.add(o);
+    });
+    // Conserva el modelo actual aunque esté inactivo
+    if (sel && !modelo.querySelector(`option[value="${sel}"]`) && modelo.dataset.inicial === marca.value) {
+      modelo.add(new Option(modelo.dataset.texto, sel, true, true));
+    }
+    modelo.disabled = !marca.value;
+  }
+  modelo.dataset.inicial = marca.value;
+  modelo.dataset.texto = modelo.options[modelo.selectedIndex] ? modelo.options[modelo.selectedIndex].text : "";
+  marca.addEventListener("change", () => { modelo.value = ""; llenar(); });
+  llenar();
+})();
+</script>
+{% endblock %}

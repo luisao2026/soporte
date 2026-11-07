@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div>
+    <h1>Hola, {{ user.first_name|title|default:user.username }}</h1>
+    <small class="text-muted">{{ user.get_rol_display_efectivo }}{% if user.cargo %} · {{ user.cargo }}{% endif %}</small>
+  </div>
+  {% if user.puede_crear_tickets %}
+  <a href="{% url 'ticket_crear' %}" class="btn btn-istam"><i class="bi bi-plus-circle"></i> Crear ticket</a>
+  {% endif %}
+</div>
+
+{% if user.es_personal_tic %}
+{# ================= ADMINISTRADOR / RESPONSABLE DE TIC ================= #}
+<div class="row g-3 mb-4">
+  {% for valor, etiqueta, n, color in tarjetas %}
+  <div class="col-6 col-md-4 col-xl">
+    <a href="{% url 'ticket_lista' %}?estado={{ valor }}" class="text-decoration-none text-reset">
+      <div class="card kpi kpi-{{ color }} h-100"><div class="card-body">
+        <div class="numero">{{ n }}</div><div class="text-muted small">{{ etiqueta }}</div>
+      </div></div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-7">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between"><span><i class="bi bi-hourglass-split"></i> Pendientes de asignar</span>
+        <a href="{% url 'ticket_lista' %}?estado=PENDIENTE" class="small">Ver todos</a></div>
+      <div class="table-responsive"><table class="table table-hover mb-0 align-middle">
+        <thead><tr><th>Ticket</th><th>Equipo / aplicación</th><th>Solicitante</th><th>Prioridad</th><th></th></tr></thead>
+        <tbody>
+        {% for t in sin_asignar %}
+          <tr><td><a href="{% url 'ticket_detalle' t.pk %}">{{ t.numero }}</a><br><small class="text-muted">{{ t.fecha|date:"d/m/Y H:i" }}</small></td>
+            <td>{% include "includes/atendido.html" %}</td>
+            <td>{{ t.solicitante }}</td><td>{% include "includes/prioridad.html" %}</td>
+            <td class="text-end">{% if user.es_admin %}<a href="{% url 'ticket_detalle' t.pk %}#asignar" class="btn btn-sm btn-outline-primary">Asignar</a>{% endif %}</td></tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No hay tickets pendientes de asignar.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex justify-content-between"><span><i class="bi bi-check2-square"></i> Atendidos, listos para cerrar</span>
+        <a href="{% url 'ticket_lista' %}?estado=ATENDIDO" class="small">Ver todos</a></div>
+      <div class="table-responsive"><table class="table table-hover mb-0 align-middle">
+        <thead><tr><th>Ticket</th><th>Equipo / aplicación</th><th>Practicante</th><th>Resultado</th></tr></thead>
+        <tbody>
+        {% for t in por_atender %}
+          <tr><td><a href="{% url 'ticket_detalle' t.pk %}">{{ t.numero }}</a></td><td>{% include "includes/atendido.html" with corto=1 %}</td>
+            <td>{{ t.practicante|default:"—" }}</td><td>{{ t.get_resultado_display }}</td></tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-4">No hay tickets por cerrar.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-laptop"></i> Estado de los equipos <span class="badge text-bg-light border float-end">{{ total_equipos }} en inventario</span></div>
+      <ul class="list-group list-group-flush">
+        {% for etiqueta, n, color in equipos_estado %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span><span class="badge text-bg-{{ color }}">&nbsp;</span> {{ etiqueta }}</span><strong>{{ n }}</strong>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-window-stack"></i> Soporte a aplicaciones</span>
+        <a href="{% url 'aplicacion_lista' %}" class="small">Ver todas</a></div>
+      <ul class="list-group list-group-flush">
+        {% for a in aplicaciones %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <a href="{% url 'aplicacion_detalle' a.pk %}" class="text-reset text-decoration-none"><i class="bi {{ a.icono }} icono-ambito"></i> {{ a.nombre }}</a>
+          <span>{% if a.abiertos %}<span class="badge text-bg-warning" title="Tickets abiertos">{{ a.abiertos }}</span>{% endif %}
+            <small class="text-muted ms-1" title="Total de tickets">{{ a.total }}</small></span>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted">No hay aplicaciones registradas.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><i class="bi bi-person-gear"></i> Carga de los practicantes</div>
+      <div class="table-responsive"><table class="table mb-0 align-middle">
+        <thead><tr><th>Practicante</th><th class="text-center">En atención</th><th class="text-center">Atendidos</th></tr></thead>
+        <tbody>
+        {% for pr in carga %}
+          <tr><td>{{ pr }}</td><td class="text-center"><span class="badge text-bg-warning">{{ pr.activos }}</span></td>
+            <td class="text-center">{{ pr.atendidos }}</td></tr>
+        {% empty %}
+          <tr><td colspan="3" class="text-muted text-center py-3">No hay practicantes registrados.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+{% elif user.es_practicante %}
+{# ================= PRACTICANTE ================= #}
+<div class="row g-3 mb-4">
+  {% for etiqueta, n, color in resumen %}
+  <div class="col-6 col-md-3"><div class="card kpi kpi-{{ color }}"><div class="card-body">
+    <div class="numero">{{ n }}</div><div class="text-muted small">{{ etiqueta }}</div></div></div></div>
+  {% endfor %}
+</div>
+<div class="card">
+  <div class="card-header"><i class="bi bi-tools"></i> Tickets por atender
+    <span class="float-end small text-muted">{{ diagnosticos }} diagnóstico{{ diagnosticos|pluralize }} · {{ mantenimientos }} mantenimiento{{ mantenimientos|pluralize }} realizados</span></div>
+  <div class="table-responsive"><table class="table table-hover mb-0 align-middle">
+    <thead><tr><th>Ticket</th><th>Equipo / aplicación</th><th>Solicitante</th><th>Tipo de soporte</th><th>Prioridad</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+    {% for t in mis_activos %}
+      <tr><td>{{ t.numero }}<br><small class="text-muted">{{ t.fecha|date:"d/m/Y" }}</small></td>
+        <td>{% include "includes/atendido.html" %}</td>
+        <td>{{ t.solicitante }}</td><td>{{ t.get_tipo_soporte_display }}</td><td>{% include "includes/prioridad.html" %}</td>
+        <td>{% include "includes/estado_ticket.html" %}</td>
+        <td class="text-end"><a href="{% url 'ticket_detalle' t.pk %}" class="btn btn-sm btn-istam">Atender</a></td></tr>
+    {% empty %}
+      <tr><td colspan="7" class="text-center text-muted py-4">No tiene tickets pendientes. ¡Buen trabajo!</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+{% else %}
+{# ================= DOCENTE / ESTUDIANTE ================= #}
+<div class="row g-3 mb-3">
+  <div class="col-md-6"><a href="{% url 'ticket_crear' %}?tipo=equipo" class="card h-100 text-decoration-none text-reset tarjeta-enlace"><div class="card-body d-flex gap-3 align-items-center">
+    <div class="app-icono"><i class="bi bi-laptop"></i></div>
+    <div><div class="fw-semibold">Soporte para mi equipo</div><small class="text-muted">Falla, revisión o mantenimiento de laptop, computadora, proyector...</small></div></div></a></div>
+  <div class="col-md-6"><a href="{% url 'ticket_crear' %}?tipo=aplicacion" class="card h-100 text-decoration-none text-reset tarjeta-enlace"><div class="card-body d-flex gap-3 align-items-center">
+    <div class="app-icono"><i class="bi bi-window-stack"></i></div>
+    <div><div class="fw-semibold">Soporte de aplicaciones</div><small class="text-muted">EVA (Moodle), sitio web, SIGA, correo: acceso, cursos, errores...</small></div></div></a></div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-laptop"></i> Mis equipos</span>
+        <a href="{% url 'equipo_crear' %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus"></i> Registrar equipo</a></div>
+      <ul class="list-group list-group-flush">
+        {% for e in mis_equipos %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div><a href="{% url 'equipo_detalle' e.pk %}">{{ e.nombre }}</a><br>
+            <small class="text-muted">{{ e.codigo }} · {{ e.categoria }} · {{ e.marca }} {{ e.modelo.nombre }}</small></div>
+          {% include "includes/estado_equipo.html" %}
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted text-center py-4">Aún no registra equipos. Registre su equipo para poder solicitar soporte.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between"><span><i class="bi bi-ticket-detailed"></i> Mis últimos tickets</span>
+        <span class="small text-muted">{{ abiertos }} abierto{{ abiertos|pluralize }}</span></div>
+      <div class="table-responsive"><table class="table table-hover mb-0 align-middle">
+        <thead><tr><th>Ticket</th><th>Equipo / aplicación</th><th>Técnico</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for t in mis_tickets %}
+          <tr><td><a href="{% url 'ticket_detalle' t.pk %}">{{ t.numero }}</a><br><small class="text-muted">{{ t.fecha|date:"d/m/Y" }}</small></td>
+            <td>{% include "includes/atendido.html" with corto=1 %}</td><td>{{ t.practicante|default:"Por asignar" }}</td>
+            <td>{% include "includes/estado_ticket.html" %}{% if t.resultado %}<br><small>{{ t.get_resultado_display }}</small>{% endif %}</td></tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-4">No ha creado tickets.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Aplicaciones{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Aplicaciones y plataformas</h1><small class="text-muted">Sistemas institucionales a los que el Departamento de TIC da soporte</small></div>
+  <div class="d-flex gap-2">
+    {% if user.puede_crear_tickets %}<a href="{% url 'ticket_crear' %}?tipo=aplicacion" class="btn btn-outline-primary"><i class="bi bi-ticket-detailed"></i> Crear ticket</a>{% endif %}
+    {% if user.es_admin %}<a href="{% url 'aplicacion_crear' %}" class="btn btn-istam"><i class="bi bi-plus-circle"></i> Registrar aplicación</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3">
+  {% for a in aplicaciones %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card h-100 tarjeta-app {% if not a.activo %}opacity-75{% endif %}">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex gap-3 align-items-start">
+          <div class="app-icono"><i class="bi {{ a.icono }}"></i></div>
+          <div class="flex-grow-1">
+            <h2 class="h6 mb-0"><a href="{% url 'aplicacion_detalle' a.pk %}" class="text-reset text-decoration-none stretched-link">{{ a.nombre }}</a></h2>
+            <small class="text-muted">{{ a.plataforma|default:a.get_tipo_display }}</small>
+          </div>
+          {% if not a.activo %}<span class="badge text-bg-secondary">Inactiva</span>{% endif %}
+        </div>
+        {% if a.descripcion %}<p class="small text-muted mt-2 mb-2">{{ a.descripcion|truncatechars:110 }}</p>{% endif %}
+        <div class="mt-auto pt-2 d-flex justify-content-between align-items-center small">
+          <span><i class="bi bi-person-gear"></i> {{ a.responsable|default:"Sin responsable" }}</span>
+          <span>{% if a.abiertos %}<span class="badge text-bg-warning">{{ a.abiertos }} abierto{{ a.abiertos|pluralize }}</span>{% endif %}
+            <span class="text-muted ms-1">{{ a.total }} ticket{{ a.total|pluralize }}</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12"><div class="card card-body text-center text-muted py-5">No hay aplicaciones registradas.</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

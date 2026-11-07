@@ -1,0 +1,41 @@
+<form class="card card-body mb-3 no-imprimir" method="get">
+  <div class="row g-2 align-items-end">
+    <div class="col-6 col-md-2"><label class="form-label small mb-1">Desde</label><input type="date" name="desde" value="{{ request.GET.desde }}" class="form-control"></div>
+    <div class="col-6 col-md-2"><label class="form-label small mb-1">Hasta</label><input type="date" name="hasta" value="{{ request.GET.hasta }}" class="form-control"></div>
+    {% if tipo_reporte == "tickets" %}
+      <div class="col-md-2"><label class="form-label small mb-1">Soporte para</label><select name="ambito" class="form-select"><option value="">Equipos y aplicaciones</option>
+        {% for v, l in ambitos %}<option value="{{ v }}" {% if v == request.GET.ambito %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><label class="form-label small mb-1">Tickets</label><select name="grupo" class="form-select">
+        {% for v, l in grupos %}<option value="{{ v }}" {% if v == grupo %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><label class="form-label small mb-1">Tipo de soporte</label><select name="tipo" class="form-select"><option value="">Todos</option>
+        {% for v, l in tipos %}<option value="{{ v }}" {% if v == request.GET.tipo %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-1"><label class="form-label small mb-1">Prioridad</label><select name="prioridad" class="form-select"><option value="">Todas</option>
+        {% for v, l in prioridades %}<option value="{{ v }}" {% if v == request.GET.prioridad %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    {% elif tipo_reporte == "aplicaciones" %}
+      <div class="col-md-2"><label class="form-label small mb-1">Aplicación</label><select name="aplicacion" class="form-select"><option value="">Todas</option>
+        {% for a in aplicaciones %}<option value="{{ a.pk }}" {% if a.pk|stringformat:"s" == request.GET.aplicacion %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><label class="form-label small mb-1">Tipo de solicitud</label><select name="categoria" class="form-select"><option value="">Todos</option>
+        {% for v, l in categorias_app %}<option value="{{ v }}" {% if v == request.GET.categoria %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><label class="form-label small mb-1">Resultado</label><select name="resultado" class="form-select"><option value="">Todos</option>
+        {% for v, l in resultados %}<option value="{{ v }}" {% if v == request.GET.resultado %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        <option value="PENDIENTE" {% if request.GET.resultado == "PENDIENTE" %}selected{% endif %}>En atención</option></select></div>
+    {% elif tipo_reporte == "diagnosticos" %}
+      <div class="col-md-3"><label class="form-label small mb-1">Resultado</label><select name="resultado" class="form-select"><option value="">Todos</option>
+        {% for v, l in resultados %}<option value="{{ v }}" {% if v == request.GET.resultado %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        <option value="PENDIENTE" {% if request.GET.resultado == "PENDIENTE" %}selected{% endif %}>En atención</option></select></div>
+    {% elif tipo_reporte == "mantenimientos" %}
+      <div class="col-md-2"><label class="form-label small mb-1">Mantenimiento</label><select name="tipo" class="form-select"><option value="">Preventivo y correctivo</option>
+        {% for v, l in tipos %}<option value="{{ v }}" {% if v == request.GET.tipo %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><label class="form-label small mb-1">Tipo de equipo</label><select name="categoria" class="form-select"><option value="">Todos</option>
+        {% for c in categorias %}<option value="{{ c.pk }}" {% if c.pk|stringformat:"s" == request.GET.categoria %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+    {% endif %}
+    {% if practicantes %}
+      <div class="col-md-2"><label class="form-label small mb-1">Técnico/practicante</label><select name="practicante" class="form-select"><option value="">Todos</option>
+        {% for pr in practicantes %}<option value="{{ pr.pk }}" {% if pr.pk|stringformat:"s" == request.GET.practicante %}selected{% endif %}>{{ pr }}</option>{% endfor %}</select></div>
+    {% endif %}
+    <div class="col-md-auto d-flex gap-2">
+      <button class="btn btn-istam"><i class="bi bi-funnel"></i> Generar</button>
+      <a href="{{ request.path }}" class="btn btn-light" title="Limpiar filtros"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </div>
+</form>

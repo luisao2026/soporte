@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <h1>Administración de usuarios</h1>
+  <div class="dropdown">
+    <button class="btn btn-istam dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-person-plus"></i> Registrar</button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      {% for v, l in roles %}<li><a class="dropdown-item" href="{% url 'usuario_crear' %}?rol={{ v }}">{{ l }}</a></li>{% endfor %}
+    </ul>
+  </div>
+</div>
+<form class="card card-body mb-3" method="get">
+  <div class="row g-2">
+    <div class="col-md-5"><input name="q" value="{{ q }}" class="form-control" placeholder="Buscar por cédula, nombres, apellidos o correo"></div>
+    <div class="col-md-3"><select name="rol" class="form-select"><option value="">Todos los roles</option>
+      {% for v, l in roles %}<option value="{{ v }}" {% if v == rol %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><select name="estado" class="form-select"><option value="">Todos</option>
+      <option value="1" {% if estado == "1" %}selected{% endif %}>Activos</option><option value="0" {% if estado == "0" %}selected{% endif %}>Inactivos</option></select></div>
+    <div class="col-md-2 d-grid"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Filtrar</button></div>
+  </div>
+</form>
+<div class="card"><div class="table-responsive">
+<table class="table table-hover mb-0 align-middle">
+  <thead><tr><th>Cédula</th><th>Apellidos y nombres</th><th>Correo / celular</th><th>Cargo</th><th>Rol</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+  <tbody>
+  {% for u in pagina %}
+    <tr>
+      <td>{{ u.cedula|default:"—" }}</td>
+      <td><a href="{% url 'usuario_detalle' u.pk %}">{{ u.nombre_completo }}</a></td>
+      <td>{{ u.email }}<br><small class="text-muted">{{ u.celular }}</small></td>
+      <td>{{ u.cargo|default:"—" }}</td>
+      <td>{{ u.get_rol_display_efectivo }}</td>
+      <td>{% if u.is_active %}<span class="badge text-bg-success">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</td>
+      <td class="text-end text-nowrap">
+        <a href="{% url 'usuario_editar' u.pk %}" class="btn btn-sm btn-outline-primary" title="Modificar"><i class="bi bi-pencil"></i></a>
+        {% if u != user %}
+        <form method="post" action="{% url 'usuario_cambiar_estado' u.pk %}" class="d-inline">{% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button class="btn btn-sm {% if u.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+            title="{% if u.is_active %}Desactivar{% else %}Activar{% endif %}"
+            {% if u.is_active %}data-titulo="Desactivar usuario" data-tipo="peligro" data-boton="Sí, desactivar" data-confirmar="{{ u.nombre_completo }} ya no podrá ingresar al sistema. ¿Desea continuar?"{% else %}data-titulo="Activar usuario" data-tipo="exito" data-boton="Sí, activar" data-confirmar="{{ u.nombre_completo }} podrá ingresar nuevamente al sistema."{% endif %}>
+            <i class="bi {% if u.is_active %}bi-person-x{% else %}bi-person-check{% endif %}"></i></button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="text-center text-muted py-4">No se encontraron usuarios.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% include "includes/paginacion.html" %}
+{% endblock %}

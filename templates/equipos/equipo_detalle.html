@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titulo %}Equipo {{ equipo.codigo }}{% endblock %}
+{% block contenido %}
+{% with e=equipo %}
+<div class="titulo-pagina">
+  <div><h1>{{ e.codigo }} · {{ e.nombre }}</h1><span class="text-muted">{{ e.categoria }} · {{ e.marca }} {{ e.modelo.nombre }}</span> {% include "includes/estado_equipo.html" %}</div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if puede_ticket %}<a href="{% url 'ticket_crear' %}?equipo={{ e.pk }}" class="btn btn-istam"><i class="bi bi-ticket-detailed"></i> Solicitar soporte</a>{% endif %}
+    {% if e.ticket_abierto %}<a href="{% url 'ticket_detalle' e.ticket_abierto.pk %}" class="btn btn-outline-warning"><i class="bi bi-hourglass-split"></i> Ticket abierto {{ e.ticket_abierto.numero }}</a>{% endif %}
+    {% if puede_editar %}<a href="{% url 'equipo_editar' e.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Modificar</a>{% endif %}
+    <a href="{% url 'equipo_lista' %}" class="btn btn-light">Volver</a>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-4"><div class="card"><div class="card-body"><dl class="dato mb-0">
+    <dt>Código del equipo</dt><dd>{{ e.codigo }}</dd>
+    <dt>Nombre del equipo</dt><dd>{{ e.nombre }}</dd>
+    <dt>Tipo de equipo</dt><dd>{{ e.categoria }}</dd>
+    <dt>Marca / modelo</dt><dd>{{ e.marca }} {{ e.modelo.nombre }}</dd>
+    <dt>Número de serie</dt><dd><code>{{ e.numero_serie }}</code></dd>
+    <dt>Usuario responsable</dt><dd>{{ e.responsable }}<br><small class="text-muted">{{ e.responsable.get_rol_display }} · {{ e.responsable.email }}</small></dd>
+    <dt>Especificaciones</dt><dd class="texto-largo">{{ e.especificaciones|default:"—" }}</dd>
+    <dt>Fecha de registro</dt><dd class="mb-0">{{ e.fecha_registro|date:"d/m/Y H:i" }}</dd>
+  </dl></div></div></div>
+  <div class="col-lg-8"><div class="card">
+    <div class="card-header">Historial de soporte ({{ tickets|length }})</div>
+    <div class="table-responsive"><table class="table table-hover mb-0 align-middle">
+      <thead><tr><th>Ticket</th><th>Fecha</th><th>Tipo de soporte</th><th>Mantenimientos</th><th>Practicante</th><th>Estado / resultado</th></tr></thead>
+      <tbody>
+      {% for t in tickets %}
+        <tr><td><a href="{% url 'ticket_detalle' t.pk %}">{{ t.numero }}</a></td><td>{{ t.fecha|date:"d/m/Y" }}</td><td>{{ t.get_tipo_soporte_display }}</td>
+          <td>{% for m in t.mantenimientos.all %}<span class="badge text-bg-light border">{{ m.get_tipo_display }}</span> {% empty %}—{% endfor %}</td>
+          <td>{{ t.practicante|default:"—" }}</td>
+          <td>{% include "includes/estado_ticket.html" %}{% if t.resultado %}<br><small>{{ t.get_resultado_display }}</small>{% endif %}</td></tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">El equipo no tiene tickets de soporte.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div></div>
+</div>
+{% endwith %}
+{% endblock %}

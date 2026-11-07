@@ -1,0 +1,17 @@
+{% comment %}Muestra los campos de un formulario con Bootstrap. Uso: {% include "includes/form.html" with form=form cols="col-md-6" %}{% endcomment %}
+{% if form.non_field_errors %}<div class="alert alert-danger py-2">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+{% for h in form.hidden_fields %}{{ h }}{% endfor %}
+<div class="row g-3">
+{% for campo in form.visible_fields %}
+  <div class="{% if campo.field.widget.input_type == 'textarea' or campo.field.widget.attrs.rows %}col-12{% else %}{{ cols|default:'col-md-6' }}{% endif %}">
+    {% if campo.field.widget.input_type == "checkbox" %}
+      <div class="form-check mt-md-4">{{ campo }} <label class="form-check-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label></div>
+    {% else %}
+      <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}{% if campo.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+      {{ campo }}
+    {% endif %}
+    {% if campo.help_text %}<div class="form-text">{{ campo.help_text|safe }}</div>{% endif %}
+    {% for e in campo.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+  </div>
+{% endfor %}
+</div>

@@ -1,0 +1,39 @@
+# Sistema de Soporte de Equipos Informáticos - ISTAM
+# Uso:  docker compose up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: soporte_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-soporte_istam}
+      POSTGRES_USER: ${DB_USER:-soporte}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD en el archivo .env}
+      TZ: America/Guayaquil
+    volumes:
+      - soporte_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-soporte} -d ${DB_NAME:-soporte_istam}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    image: soporte_istam:latest
+    container_name: soporte_web
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_ENGINE: postgres
+      DB_HOST: db
+      DB_PORT: "5432"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Solo accesible desde el propio servidor; Apache/Nginx publica el dominio.
+    ports:
+      - "127.0.0.1:${PUERTO:-8082}:8000"
+
+volumes:
+  soporte_db:

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Equipos{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <h1>{% if user.es_solicitante %}Mis equipos{% else %}Inventario de equipos{% endif %}</h1>
+  {% if puede_registrar %}<a href="{% url 'equipo_crear' %}" class="btn btn-istam"><i class="bi bi-plus-circle"></i> Registrar equipo</a>{% endif %}
+</div>
+<form class="card card-body mb-3" method="get">
+  <div class="row g-2">
+    <div class="col-md-4"><input name="q" value="{{ f.q }}" class="form-control" placeholder="Código, nombre, serie o responsable"></div>
+    <div class="col-md-2"><select name="categoria" class="form-select"><option value="">Tipo de equipo</option>
+      {% for c in categorias %}<option value="{{ c.pk }}" {% if f.categoria == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><select name="marca" class="form-select"><option value="">Marca</option>
+      {% for m in marcas %}<option value="{{ m.pk }}" {% if f.marca == m.pk|stringformat:"s" %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><select name="estado" class="form-select"><option value="">Estado</option>
+      {% for v, l in estados %}<option value="{{ v }}" {% if f.estado == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="col-md-2 d-grid"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Filtrar</button></div>
+  </div>
+</form>
+<div class="card"><div class="table-responsive">
+<table class="table table-hover mb-0 align-middle">
+  <thead><tr><th>Código</th><th>Equipo</th><th>Tipo</th><th>Marca / modelo</th><th>N.º de serie</th>{% if not user.es_solicitante %}<th>Responsable</th>{% endif %}<th>Estado</th><th>Registro</th></tr></thead>
+  <tbody>
+  {% for e in pagina %}
+    <tr>
+      <td><a href="{% url 'equipo_detalle' e.pk %}" class="fw-semibold">{{ e.codigo }}</a></td>
+      <td>{{ e.nombre }}</td><td>{{ e.categoria }}</td><td>{{ e.marca }} {{ e.modelo.nombre }}</td><td><code>{{ e.numero_serie }}</code></td>
+      {% if not user.es_solicitante %}<td>{{ e.responsable }}</td>{% endif %}
+      <td>{% include "includes/estado_equipo.html" %}</td><td>{{ e.fecha_registro|date:"d/m/Y" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="8" class="text-center text-muted py-4">No hay equipos registrados{% if f.q or f.estado or f.marca or f.categoria %} con esos filtros{% endif %}.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% include "includes/paginacion.html" %}
+{% endblock %}

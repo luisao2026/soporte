@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>{{ titulo }}</h1>
+  <a href="{% if ticket %}{% url 'ticket_detalle' ticket.pk %}{% else %}{% url 'ticket_crear' %}{% endif %}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Volver</a></div>
+<div class="row g-3">
+  <div class="col-lg-8"><div class="card"><div class="card-body">
+    <form method="post" novalidate>{% csrf_token %}
+      {% if ticket %}
+        {% if ticket.es_aplicacion %}<p class="mb-3"><strong>Aplicación:</strong> {{ ticket.aplicacion }}</p>
+        {% else %}<p class="mb-3"><strong>Equipo:</strong> {{ ticket.equipo }} · {{ ticket.marca }} {{ ticket.modelo }} · Serie {{ ticket.numero_serie }}</p>{% endif %}
+      {% endif %}
+      {% include "includes/form.html" with form=form cols="col-md-6" %}
+      <div class="mt-4 d-flex gap-2"><button class="btn btn-istam"><i class="bi bi-send"></i> {% if ticket %}Guardar cambios{% else %}Enviar ticket{% endif %}</button>
+        <a href="{% url 'ticket_lista' %}" class="btn btn-light">Cancelar</a></div>
+    </form>
+  </div></div></div>
+  <div class="col-lg-4">
+  {% if ambito == "aplicacion" or ticket.es_aplicacion %}
+    <div class="card"><div class="card-body small">
+      <h2 class="h6">Para atenderle más rápido</h2>
+      <p class="mb-2"><strong>Acceso o contraseña:</strong> indique su usuario o cédula. Nunca escriba su contraseña en el ticket.</p>
+      <p class="mb-2"><strong>Cursos o matrículas:</strong> indique el nombre exacto del curso, la carrera y el paralelo.</p>
+      <p class="mb-2"><strong>Error del sistema:</strong> escriba el mensaje que aparece, qué estaba haciendo y desde cuándo ocurre.</p>
+      <p class="mb-0"><strong>Publicaciones web:</strong> pegue el enlace de la página y el texto o archivo a publicar.</p>
+    </div></div>
+  {% else %}
+    <div class="card"><div class="card-body small">
+      <h2 class="h6">¿Qué tipo de soporte elegir?</h2>
+      <p class="mb-2"><strong>Diagnóstico:</strong> el equipo falla y no sabe la causa.</p>
+      <p class="mb-2"><strong>Mantenimiento preventivo:</strong> limpieza, revisión y actualización periódica aunque el equipo funcione.</p>
+      <p class="mb-3"><strong>Mantenimiento correctivo:</strong> reparar una falla conocida (pantalla, teclado, disco, sistema operativo...).</p>
+      <p class="text-muted mb-0">Un equipo solo puede tener un ticket abierto a la vez. El número de ticket, la marca, el modelo y la serie se registran automáticamente.</p>
+    </div></div>
+    {% if not ticket and not user.es_admin %}<a href="{% url 'equipo_crear' %}" class="btn btn-outline-secondary w-100 mt-3"><i class="bi bi-plus"></i> Mi equipo no está en la lista</a>{% endif %}
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

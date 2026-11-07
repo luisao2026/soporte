@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block titulo %}{{ app }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div class="d-flex gap-3 align-items-center">
+    <div class="app-icono"><i class="bi {{ app.icono }}"></i></div>
+    <div><h1>{{ app.nombre }}</h1><span class="text-muted">{{ app.get_tipo_display }}{% if app.plataforma %} · {{ app.plataforma }}{% endif %}</span>
+      {% if not app.activo %}<span class="badge text-bg-secondary ms-1">Inactiva</span>{% endif %}</div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if user.puede_crear_tickets and app.activo %}<a href="{% url 'ticket_crear' %}?tipo=aplicacion&aplicacion={{ app.pk }}" class="btn btn-istam"><i class="bi bi-ticket-detailed"></i> Crear ticket</a>{% endif %}
+    {% if user.es_admin %}
+    <a href="{% url 'aplicacion_editar' app.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Modificar</a>
+    <form method="post" action="{% url 'aplicacion_estado' app.pk %}">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+      {% if app.activo %}
+      <button class="btn btn-outline-danger" data-titulo="Desactivar aplicación" data-tipo="peligro" data-boton="Sí, desactivar"
+        data-confirmar="Ya no se podrán crear tickets para {{ app.nombre }}. Los tickets existentes se conservan."><i class="bi bi-toggle-off"></i> Desactivar</button>
+      {% else %}
+      <button class="btn btn-outline-success" data-titulo="Activar aplicación" data-tipo="exito" data-boton="Sí, activar"
+        data-confirmar="Se podrán crear tickets para {{ app.nombre }} nuevamente."><i class="bi bi-toggle-on"></i> Activar</button>
+      {% endif %}
+    </form>
+    {% endif %}
+    <a href="{% url 'aplicacion_lista' %}" class="btn btn-light">Volver</a>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3"><div class="card-body"><dl class="dato mb-0">
+      <dt>Dirección</dt><dd>{% if app.url %}<a href="{{ app.url }}" target="_blank" rel="noopener">{{ app.url }} <i class="bi bi-box-arrow-up-right small"></i></a>{% else %}—{% endif %}</dd>
+      <dt>Responsable técnico</dt><dd>{{ app.responsable|default:"Sin asignar" }}</dd>
+      <dt>Proveedor / soporte externo</dt><dd>{{ app.proveedor|default:"—" }}</dd>
+      <dt>Descripción</dt><dd class="texto-largo mb-0">{{ app.descripcion|default:"—" }}</dd>
+    </dl></div></div>
+    <div class="card"><div class="card-header"><i class="bi bi-pie-chart"></i> Solicitudes por tipo</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item d-flex justify-content-between fw-semibold">Tickets abiertos<span>{{ abiertos }}</span></li>
+        {% for etiqueta, n in categorias %}<li class="list-group-item d-flex justify-content-between">{{ etiqueta }}<span>{{ n }}</span></li>
+        {% empty %}<li class="list-group-item text-muted">Aún no hay tickets.</li>{% endfor %}
+        {% if categorias %}<li class="list-group-item d-flex justify-content-between text-muted">Total<span>{{ total }}</span></li>{% endif %}
+      </ul></div>
+  </div>
+  <div class="col-lg-8"><div class="card">
+    <div class="card-header">Historial de soporte{% if user.es_practicante %} (sus tickets){% endif %}</div>
+    <div class="table-responsive"><table class="table table-hover mb-0 align-middle">
+      <thead><tr><th>Ticket</th><th>Solicitud</th><th>Solicitante</th><th>Técnico</th><th>Estado / resultado</th></tr></thead>
+      <tbody>
+      {% for t in tickets %}
+        <tr><td><a href="{% url 'ticket_detalle' t.pk %}">{{ t.numero }}</a><br><small class="text-muted">{{ t.fecha|date:"d/m/Y" }}</small></td>
+          <td>{{ t.get_categoria_app_display }}{% if t.referencia %}<br><small class="text-muted">{{ t.referencia|truncatechars:50 }}</small>{% endif %}</td>
+          <td>{{ t.solicitante }}</td><td>{{ t.practicante|default:"—" }}</td>
+          <td>{% include "includes/estado_ticket.html" %}{% if t.resultado %}<br><small>{{ t.get_resultado_display }}</small>{% endif %}</td></tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">Sin tickets de soporte.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div></div>
+</div>
+{% endblock %}

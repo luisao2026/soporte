@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}Crear ticket{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><div><h1>Crear ticket de soporte</h1><small class="text-muted">¿Con qué necesita ayuda?</small></div></div>
+<div class="row g-3">
+  <div class="col-md-6">
+    <a href="{% url 'ticket_crear' %}?tipo=equipo" class="card h-100 text-decoration-none text-reset tarjeta-enlace">
+      <div class="card-body p-4">
+        <div class="app-icono grande"><i class="bi bi-laptop"></i></div>
+        <h2 class="h5 mt-3">Equipo informático</h2>
+        <p class="text-muted mb-2">Laptop, computadora, tablet, proyector o celular que no funciona bien o necesita mantenimiento.</p>
+        <small class="text-muted">Diagnóstico · Mantenimiento preventivo · Mantenimiento correctivo</small>
+        {% if not tiene_equipos %}<div class="alert alert-info small py-2 mt-3 mb-0"><i class="bi bi-info-circle"></i> Primero deberá registrar su equipo.</div>{% endif %}
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6">
+    <a href="{% url 'ticket_crear' %}?tipo=aplicacion" class="card h-100 text-decoration-none text-reset tarjeta-enlace">
+      <div class="card-body p-4">
+        <div class="app-icono grande"><i class="bi bi-window-stack"></i></div>
+        <h2 class="h5 mt-3">Aplicación o plataforma</h2>
+        <p class="text-muted mb-2">Problemas de acceso, cuentas, cursos, publicaciones o errores en los sistemas institucionales.</p>
+        <div class="d-flex flex-wrap gap-1">{% for a in aplicaciones %}<span class="badge badge-app"><i class="bi {{ a.icono }}"></i> {{ a.nombre }}</span>{% endfor %}</div>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}

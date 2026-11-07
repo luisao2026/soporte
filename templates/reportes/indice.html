@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>Administración de reportes</h1></div>
+{% if user.es_practicante %}<div class="alert alert-info py-2"><i class="bi bi-info-circle"></i> Los reportes muestran únicamente los tickets y trabajos que usted ha atendido.</div>{% endif %}
+<div class="row g-3">
+  {% url 'reporte_tickets' as u1 %}{% url 'reporte_diagnosticos' as u2 %}{% url 'reporte_mantenimientos' as u3 %}{% url 'reporte_tipos' as u4 %}
+  <div class="col-md-6 col-xl-4"><a href="{{ u1 }}" class="card h-100 text-decoration-none text-reset tarjeta-enlace"><div class="card-body">
+    <i class="bi bi-ticket-detailed fs-2 text-primary"></i><h2 class="h6 mt-2">Reporte de tickets</h2>
+    <p class="small text-muted mb-0">Tickets registrados, pendientes, asignados, atendidos y cerrados.</p></div></a></div>
+  <div class="col-md-6 col-xl-4"><a href="{{ u2 }}" class="card h-100 text-decoration-none text-reset tarjeta-enlace"><div class="card-body">
+    <i class="bi bi-search fs-2 text-info"></i><h2 class="h6 mt-2">Reporte de diagnósticos</h2>
+    <p class="small text-muted mb-0">Equipo, usuario, problema, diagnóstico, técnico, fecha y resultado.</p></div></a></div>
+  <div class="col-md-6 col-xl-4"><a href="{{ u3 }}" class="card h-100 text-decoration-none text-reset tarjeta-enlace"><div class="card-body">
+    <i class="bi bi-tools fs-2 text-warning"></i><h2 class="h6 mt-2">Equipos por mantenimiento</h2>
+    <p class="small text-muted mb-0">Equipos que recibieron mantenimiento preventivo o correctivo.</p></div></a></div>
+  <div class="col-md-6 col-xl-4"><a href="{{ u4 }}" class="card h-100 text-decoration-none text-reset tarjeta-enlace"><div class="card-body">
+    <i class="bi bi-bar-chart fs-2 text-success"></i><h2 class="h6 mt-2">Tipos de soporte</h2>
+    <p class="small text-muted mb-0">Diagnósticos, mantenimientos preventivos y correctivos, y soporte a aplicaciones.</p></div></a></div>
+  {% url 'reporte_aplicaciones' as u5 %}
+  <div class="col-md-6 col-xl-4"><a href="{{ u5 }}" class="card h-100 text-decoration-none text-reset tarjeta-enlace"><div class="card-body">
+    <i class="bi bi-window-stack fs-2 text-primary"></i><h2 class="h6 mt-2">Soporte a aplicaciones</h2>
+    <p class="small text-muted mb-0">Solicitudes de EVA (Moodle), sitio web, SIGA y correo: por aplicación, tipo y resultado.</p></div></a></div>
+</div>
+<p class="text-muted small mt-3">Todos los reportes se pueden filtrar por fechas y exportar a PDF o Excel.</p>
+{% endblock %}
