@@ -170,3 +170,17 @@ DEPARTAMENTO_TIC = env("DEPARTAMENTO_TIC", "Departamento de Tecnologías de la I
 ROLES_REPORTES = env_lista("ROLES_REPORTES", "ADMIN,PRACTICANTE")
 
 AUTHENTICATION_BACKENDS = ["cuentas.backends.UsuarioOCedulaBackend"]
+
+# El primero es el cifrado normal; el segundo solo se usa en la carga masiva de usuarios
+# y se reemplaza por el primero cuando el usuario inicia sesión.
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "cuentas.hashers.PBKDF2ImportacionHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
+]
+
+# Carga masiva de usuarios
+IMPORTAR_MAX_FILAS = 3000

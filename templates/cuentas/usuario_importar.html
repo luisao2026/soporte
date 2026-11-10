@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block titulo %}Carga masiva de usuarios{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Carga masiva de usuarios</h1><small class="text-muted">Registre docentes, estudiantes y practicantes desde un archivo de Excel</small></div>
+  <a href="{% url 'usuario_lista' %}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+{% if not filas %}
+{# ================= PASO 1: subir archivo ================= #}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card"><div class="card-body">
+      <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="archivo">Archivo de Excel (.xlsx) o CSV <span class="text-danger">*</span></label>
+          <input type="file" name="archivo" id="archivo" class="form-control" accept=".xlsx,.csv" required>
+          <div class="form-text">Máximo 5 MB. Se lee la hoja «Usuarios» (o la primera hoja).</div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="rol_defecto">Rol por defecto</label>
+            <select name="rol_defecto" id="rol_defecto" class="form-select">
+              <option value="">— Tomar el rol del archivo —</option>
+              {% for v, l in roles %}<option value="{{ v }}" {% if v == rol_defecto %}selected{% endif %}>{{ l }}</option>{% endfor %}
+            </select>
+            <div class="form-text">Se usa cuando la columna Rol está vacía. Útil para cargar, por ejemplo, solo estudiantes.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label d-block">Si la cédula ya existe</label>
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="checkbox" name="actualizar" id="actualizar" {% if actualizar %}checked{% endif %}>
+              <label class="form-check-label" for="actualizar">Actualizar sus datos (nombres, correo, rol...)</label>
+            </div>
+            <div class="form-text">Si no la marca, esos usuarios se omiten. La contraseña nunca se cambia.</div>
+          </div>
+        </div>
+        <button class="btn btn-istam mt-4"><i class="bi bi-eye"></i> Revisar archivo</button>
+        <span class="small text-muted ms-2">Todavía no se guarda nada: primero verá una vista previa.</span>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body">
+      <h2 class="h6"><i class="bi bi-1-circle text-success"></i> Descargue la plantilla</h2>
+      <p class="small text-muted">Trae las columnas listas, listas desplegables para Rol y Género, y una hoja de instrucciones.</p>
+      <a href="{% url 'usuario_plantilla' %}" class="btn btn-outline-success btn-sm mb-3"><i class="bi bi-file-earmark-excel"></i> Descargar plantilla</a>
+      <h2 class="h6"><i class="bi bi-2-circle text-success"></i> Llene un usuario por fila</h2>
+      <div class="table-responsive"><table class="table table-sm small mb-3">
+        <thead><tr><th>Columna</th><th>Ejemplo</th></tr></thead>
+        <tbody>
+          <tr><td>Cédula *</td><td>1104680135</td></tr>
+          <tr><td>Apellidos *</td><td>PÉREZ LOJA</td></tr>
+          <tr><td>Nombres *</td><td>ANA MARÍA</td></tr>
+          <tr><td>Correo *</td><td>ana.perez@istam.edu.ec</td></tr>
+          <tr><td>Celular</td><td>0991234567</td></tr>
+          <tr><td>Dirección</td><td>Yantzaza</td></tr>
+          <tr><td>Cargo</td><td>Docente de Contabilidad</td></tr>
+          <tr><td>Género</td><td>Femenino</td></tr>
+          <tr><td>Rol *</td><td>Docente</td></tr>
+        </tbody>
+      </table></div>
+      <h2 class="h6"><i class="bi bi-3-circle text-success"></i> Súbalo y revise la vista previa</h2>
+      <p class="small text-muted mb-0">Cada usuario nuevo ingresa con su <strong>cédula como usuario y contraseña</strong>. También puede subir un Excel propio con encabezados como «CI», «Email» o «Teléfono».</p>
+    </div></div>
+  </div>
+</div>
+
+{% else %}
+{# ================= PASO 2: vista previa ================= #}
+<div class="alert alert-info aviso-sistema"><i class="bi bi-file-earmark-excel"></i>
+  <span>Archivo <strong>{{ archivo }}</strong>: {{ n_filas }} fila{{ n_filas|pluralize }} leída{{ n_filas|pluralize }}.
+  {% if rol_defecto %}Rol por defecto: {% for v, l in roles %}{% if v == rol_defecto %}{{ l }}{% endif %}{% endfor %}.{% endif %}
+  Revise el resultado y confirme. <strong>Aún no se ha guardado nada.</strong></span></div>
+
+<div class="row g-2 mb-3">
+  <div class="col-6 col-md-3"><div class="card kpi kpi-success"><div class="card-body py-2"><div class="numero">{{ total.crear }}</div><div class="small text-muted">Se crearán</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card kpi kpi-info"><div class="card-body py-2"><div class="numero">{{ total.actualizar }}</div><div class="small text-muted">Se actualizarán</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card kpi kpi-secondary"><div class="card-body py-2"><div class="numero">{{ total.omitir }}</div><div class="small text-muted">Se omitirán (ya existen)</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card kpi kpi-danger"><div class="card-body py-2"><div class="numero">{{ total.error }}</div><div class="small text-muted">Con errores (no se cargan)</div></div></div></div>
+</div>
+
+<div class="card mb-3"><div class="card-body d-flex flex-wrap gap-2 align-items-center">
+  {% if total.crear or total.actualizar %}
+  <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="confirmar">
+    <button class="btn btn-istam" data-titulo="Confirmar carga masiva" data-tipo="exito" data-boton="Sí, guardar"
+      data-confirmar="Se crearán {{ total.crear }} usuario{{ total.crear|pluralize }}{% if total.actualizar %} y se actualizarán {{ total.actualizar }}{% endif %}.{% if total.error %} Las {{ total.error }} fila{{ total.error|pluralize }} con errores no se cargarán.{% endif %}">
+      <i class="bi bi-check2-circle"></i> Guardar {{ total.crear|add:total.actualizar }} usuario{{ total.crear|add:total.actualizar|pluralize }}</button>
+  </form>
+  {% else %}
+  <span class="text-muted"><i class="bi bi-info-circle"></i> No hay usuarios válidos para guardar.</span>
+  {% endif %}
+  {% if total.error %}<a href="{% url 'usuario_importar_errores' %}" class="btn btn-outline-danger"><i class="bi bi-file-earmark-excel"></i> Descargar filas con error</a>{% endif %}
+  <a href="{% url 'usuario_importar' %}" class="btn btn-light">Subir otro archivo</a>
+  <div class="ms-auto btn-group btn-group-sm" role="group" id="filtro-filas">
+    <button type="button" class="btn btn-outline-secondary active" data-ver="todas">Todas</button>
+    <button type="button" class="btn btn-outline-secondary" data-ver="error">Errores</button>
+    <button type="button" class="btn btn-outline-secondary" data-ver="crear">Nuevos</button>
+  </div>
+</div></div>
+
+<div class="card"><div class="table-responsive">
+<table class="table table-sm table-hover mb-0 align-middle small" id="tabla-vista">
+  <thead><tr><th>Fila</th><th>Resultado</th><th style="min-width:260px">Observaciones</th><th>Cédula</th><th>Apellidos y nombres</th><th>Correo</th><th>Rol</th><th>Celular</th><th>Cargo</th><th>Género</th></tr></thead>
+  <tbody>
+  {% for r in filas %}
+    <tr data-accion="{{ r.accion }}" class="{% if r.accion == 'error' %}table-danger{% endif %}">
+      <td>{{ r.fila }}</td>
+      <td class="text-nowrap">
+        {% if r.accion == "crear" %}<span class="badge text-bg-success">Nuevo</span>
+        {% elif r.accion == "actualizar" %}<span class="badge text-bg-info">Actualizar</span>
+        {% elif r.accion == "omitir" %}<span class="badge text-bg-secondary">Omitir</span>
+        {% else %}<span class="badge text-bg-danger">Error</span>{% endif %}
+      </td>
+      <td>{% for e in r.errores %}<div class="text-danger"><i class="bi bi-x-circle"></i> {{ e }}</div>{% endfor %}
+          {% for a in r.avisos %}<div class="text-muted"><i class="bi bi-info-circle"></i> {{ a }}</div>{% endfor %}</td>
+      <td><code>{{ r.datos.cedula|default:"—" }}</code></td>
+      <td>{{ r.datos.apellidos }} {{ r.datos.nombres }}</td>
+      <td>{{ r.datos.correo|default:"—" }}</td>
+      <td>{{ r.rol_txt|default:"—" }}</td>
+      <td>{{ r.datos.celular|default:"—" }}</td>
+      <td>{{ r.datos.cargo|default:"—" }}</td>
+      <td>{{ r.genero_txt|default:"—" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll("#filtro-filas button").forEach(function (b) {
+  b.addEventListener("click", function () {
+    document.querySelectorAll("#filtro-filas button").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    const ver = b.dataset.ver;
+    document.querySelectorAll("#tabla-vista tbody tr").forEach(function (tr) {
+      tr.style.display = (ver === "todas" || tr.dataset.accion === ver) ? "" : "none";
+    });
+  });
+});
+</script>
+{% endblock %}

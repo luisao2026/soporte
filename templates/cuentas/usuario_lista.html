@@ -3,11 +3,14 @@
 {% block contenido %}
 <div class="titulo-pagina">
   <h1>Administración de usuarios</h1>
+  <div class="d-flex gap-2">
+  <a href="{% url 'usuario_importar' %}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-arrow-up"></i> Carga masiva</a>
   <div class="dropdown">
     <button class="btn btn-istam dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-person-plus"></i> Registrar</button>
     <ul class="dropdown-menu dropdown-menu-end">
       {% for v, l in roles %}<li><a class="dropdown-item" href="{% url 'usuario_crear' %}?rol={{ v }}">{{ l }}</a></li>{% endfor %}
     </ul>
+  </div>
   </div>
 </div>
 <form class="card card-body mb-3" method="get">

@@ -39,6 +39,19 @@ Puede ingresar con el usuario **o** con la cédula.
 Los usuarios nuevos que registra el administrador ingresan con **su cédula como usuario y contraseña** y
 pueden cambiarla en *Mi perfil → Cambiar contraseña*.
 
+### Carga masiva de usuarios
+En **Usuarios → Carga masiva** el administrador puede registrar muchos usuarios a la vez:
+1. Descargue la **plantilla de Excel** (trae listas desplegables para Rol y Género y una hoja de instrucciones).
+2. Llene un usuario por fila: Cédula, Apellidos, Nombres, Correo y Rol son obligatorios; Celular, Dirección, Cargo y Género son opcionales.
+3. Suba el archivo (.xlsx o .csv). Puede elegir un **rol por defecto** para las filas sin rol, y si desea **actualizar**
+   los usuarios cuya cédula ya existe (si no, se omiten).
+4. Revise la **vista previa**: muestra qué se creará, actualizará u omitirá y los errores de cada fila (cédula inválida
+   o repetida, correo repetido, rol desconocido...). Las filas con error se pueden descargar en Excel para corregirlas.
+5. Confirme. Cada usuario nuevo ingresa con su **cédula como usuario y contraseña**.
+
+El sistema recupera el cero inicial que Excel quita a cédulas y celulares, y reconoce encabezados como «CI», «Email»,
+«Teléfono» o «Sexo», así que también sirve una lista exportada de otro sistema. Máximo 3000 filas por archivo.
+
 ## 4. Proceso del soporte técnico
 ```
 Registro del ticket → Asignación al practicante → Diagnóstico → Mantenimiento (preventivo / correctivo)
@@ -93,7 +106,7 @@ Todos se filtran por fechas y se exportan a **PDF** y **Excel**. El practicante 
 ## 6. Estructura del proyecto
 ```
 config/        Configuración (settings.py, urls.py)
-cuentas/       Usuarios, roles, login (con usuario o cédula) y perfil
+cuentas/       Usuarios, roles, login (con usuario o cédula), perfil y carga masiva (importar.py)
 equipos/       Equipos, categorías, marcas y modelos
 aplicaciones/  Catálogo de aplicaciones (EVA/Moodle, WordPress, SIGA...)
 soporte/       Tickets, diagnósticos, mantenimientos, observaciones e historial
